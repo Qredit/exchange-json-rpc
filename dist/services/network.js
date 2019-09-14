@@ -86,13 +86,13 @@ class Network {
         return peers;
     }
     async loadSeeds() {
-        const { body } = await got_1.default.get(`https://raw.githubusercontent.com/ArkEcosystem/peers/master/${this.opts.network}.json`);
+        const { body } = await got_1.default.get(`https://raw.githubusercontent.com/Qredit/peers/master/${this.opts.network}.json`);
         const seeds = JSON.parse(body);
         if (!seeds.length) {
             throw new Error("No seeds found");
         }
         for (const seed of seeds) {
-            seed.port = 4003;
+            seed.port = 4103;
         }
         this.seeds = seeds;
     }
