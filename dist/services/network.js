@@ -4,18 +4,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_1 = require("@arkecosystem/crypto");
+const peers_1 = require("@arkecosystem/peers");
 const got_1 = __importDefault(require("got"));
 const is_reachable_1 = __importDefault(require("is-reachable"));
 const lodash_sample_1 = __importDefault(require("lodash.sample"));
 const logger_1 = require("./logger");
 class Network {
-    constructor() {
-        this.seeds = [];
-    }
-    async init(opts) {
-        this.opts = opts;
-        crypto_1.Managers.configManager.setFromPreset(opts.network);
-        await this.loadSeeds();
+    async init(options) {
+        this.options = options;
+        const networkOrHost = this.options.peer
+            ? `http://${this.options.peer}:${this.options.peerPort}/api/peers`
+            : this.options.network;
+        this.peerDiscovery = (await peers_1.PeerDiscovery.new({ networkOrHost })).withLatency(options.maxLatency);
+        crypto_1.Managers.configManager.setFromPreset(options.network);
+        this.checkForAip11Enabled();
     }
     async sendGET({ path, query = {} }) {
         return this.sendRequest("get", path, { query });
@@ -23,16 +25,27 @@ class Network {
     async sendPOST({ path, body = {} }) {
         return this.sendRequest("post", path, { body });
     }
-    async sendRequest(method, url, opts, tries = 0, useSeed = false) {
+    async getHeight() {
+        return (await this.sendGET({ path: "blockchain" })).data.block.height;
+    }
+    async checkForAip11Enabled() {
+        const height = await this.getHeight();
+        crypto_1.Managers.configManager.setHeight(height);
+        const milestone = crypto_1.Managers.configManager.getMilestone(height);
+        if (!milestone.aip11) {
+            setTimeout(() => this.checkForAip11Enabled(), milestone.blocktime * 1000);
+        }
+    }
+    async sendRequest(method, url, options, tries = 0, useSeed = false) {
         try {
-            const peer = await this.getPeer(useSeed);
+            const peer = await this.getPeer();
             const uri = `http://${peer.ip}:${peer.port}/api/${url}`;
-            logger_1.logger.info(`Sending request on "${this.opts.network}" to "${uri}"`);
-            if (opts.body && typeof opts.body !== "string") {
-                opts.body = JSON.stringify(opts.body);
+            logger_1.logger.info(`Sending request on "${this.options.network}" to "${uri}"`);
+            if (options.body && typeof options.body !== "string") {
+                options.body = JSON.stringify(options.body);
             }
             const { body } = await got_1.default[method](uri, {
-                ...opts,
+                ...options,
                 ...{
                     headers: {
                         Accept: "application/vnd.core-api.v2+json",
@@ -50,15 +63,12 @@ class Network {
                 logger_1.logger.error(`Failed to find a responsive peer after 3 tries.`);
                 return undefined;
             }
-            return this.sendRequest(method, url, opts, tries);
+            return this.sendRequest(method, url, options, tries);
         }
     }
-    async getPeer(useSeed = false) {
-        if (this.opts.peer) {
-            return { ip: this.opts.peer, port: 4003 };
-        }
-        if (useSeed) {
-            return lodash_sample_1.default(this.seeds);
+    async getPeer() {
+        if (this.options.peer) {
+            return { ip: this.options.peer, port: this.options.peerPort };
         }
         const peer = lodash_sample_1.default(await this.getPeers());
         const reachable = await is_reachable_1.default(`${peer.ip}:${peer.port}`);
@@ -66,35 +76,10 @@ class Network {
             logger_1.logger.warn(`${peer.ip}:${peer.port} is unresponsive. Choosing new peer.`);
             return this.getPeer();
         }
-        return peer;
+        return { ip: peer.ip, port: peer.port };
     }
     async getPeers() {
-        const { data } = await this.sendRequest("get", "peers", {}, 0, true);
-        if (!data || !data.length) {
-            return this.seeds;
-        }
-        const peers = [];
-        for (const peer of data) {
-            const pluginName = Object.keys(peer.ports).find((key) => key.split("/")[1] === "core-api");
-            if (pluginName) {
-                const port = peer.ports[pluginName];
-                if (port >= 1 && port <= 65535) {
-                    peers.push({ ip: peer.ip, port });
-                }
-            }
-        }
-        return peers;
-    }
-    async loadSeeds() {
-        const { body } = await got_1.default.get(`https://raw.githubusercontent.com/Qredit/peers/master/${this.opts.network}.json`);
-        const seeds = JSON.parse(body);
-        if (!seeds.length) {
-            throw new Error("No seeds found");
-        }
-        for (const seed of seeds) {
-            seed.port = 4103;
-        }
-        this.seeds = seeds;
+        return this.peerDiscovery.findPeersWithPlugin("core-api");
     }
 }
 exports.network = new Network();

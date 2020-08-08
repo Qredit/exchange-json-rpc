@@ -14,7 +14,7 @@ const whitelist = __importStar(require("@hapist/whitelist"));
 const logger_1 = require("../services/logger");
 const network_1 = require("../services/network");
 const methods_1 = require("./methods");
-async function startServer(options) {
+async function startServer(options, onlyCreate) {
     if (options.allowRemote) {
         logger_1.logger.warn("Server allows remote connections. This is a potential security risk!");
     }
@@ -68,9 +68,16 @@ async function startServer(options) {
             },
         },
     });
-    await network_1.network.init({ network: options.network, peer: options.peer });
-    await server.start();
-    logger_1.logger.info(`Exchange JSON-RPC running on ${server.info.uri}`);
+    await network_1.network.init({
+        network: options.network,
+        peer: options.peer,
+        maxLatency: options.maxLatency,
+        peerPort: options.peerPort,
+    });
+    if (!onlyCreate) {
+        await server.start();
+        logger_1.logger.info(`Exchange JSON-RPC running on ${server.info.uri}`);
+    }
     return server;
 }
 exports.startServer = startServer;

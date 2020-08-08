@@ -1,10 +1,12 @@
 import { Types } from "@arkecosystem/crypto";
 declare class Network {
-    private opts;
-    private seeds;
-    init(opts: {
+    private options;
+    private peerDiscovery;
+    init(options: {
         network: Types.NetworkName;
         peer: string;
+        maxLatency: number;
+        peerPort: number;
     }): Promise<void>;
     sendGET({ path, query }: {
         path: string;
@@ -14,10 +16,11 @@ declare class Network {
         path: string;
         body: Record<string, any>;
     }): Promise<any>;
+    getHeight(): Promise<number>;
+    private checkForAip11Enabled;
     private sendRequest;
     private getPeer;
     private getPeers;
-    private loadSeeds;
 }
 export declare const network: Network;
 export {};

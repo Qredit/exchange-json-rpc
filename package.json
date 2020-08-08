@@ -1,6 +1,6 @@
 {
     "name": "@arkecosystem/exchange-json-rpc",
-    "version": "1.0.3",
+    "version": "2.1.0",
     "description": "A JSON-RPC 2.0 specification compliant server for Exchanges to interact with the ARK Blockchain.",
     "license": "MIT",
     "author": "Brian Faust <brian@ark.io>",
@@ -9,85 +9,46 @@
     ],
     "main": "dist/index",
     "types": "dist/index",
-    "bin": {
-        "exchange-json-rpc": "./bin/run"
-    },
     "scripts": {
         "build": "yarn clean && yarn compile",
         "build:watch": "yarn clean && yarn compile -w",
         "clean": "del dist",
         "compile": "../../node_modules/typescript/bin/tsc",
-        "exchange-json-rpc": "./bin/run",
         "format": "yarn lint && yarn prettier",
         "lint": "../../node_modules/tslint/bin/tslint -c ../../tslint.json -p ../../tslint-config.json './src/**/*.ts' --fix",
         "prepublishOnly": "yarn build",
         "prettier": "prettier --write \"./*.{ts,js,json,md}\" \"./src/**/*.{ts,js,json,md}\" \"./__tests__/**/*.{ts,js,json,md}\"",
-        "test": "jest --forceExit --runInBand"
-    },
-    "jest": {
-        "bail": true,
-        "collectCoverage": true,
-        "collectCoverageFrom": [
-            "src/**/*.ts",
-            "!src/index.ts",
-            "!**/node_modules/**"
-        ],
-        "coverageDirectory": "<rootDir>/.coverage",
-        "coverageReporters": [
-            "json",
-            "lcov",
-            "text",
-            "clover",
-            "html"
-        ],
-        "moduleFileExtensions": [
-            "ts",
-            "tsx",
-            "js",
-            "jsx",
-            "json",
-            "node"
-        ],
-        "setupFilesAfterEnv": [
-            "jest-extended"
-        ],
-        "testEnvironment": "node",
-        "testMatch": [
-            "**/*.test.ts"
-        ],
-        "transform": {
-            "^.+\\.tsx?$": "ts-jest"
-        },
-        "verbose": true,
-        "watchman": false
+        "test": "jest"
     },
     "dependencies": {
-        "@arkecosystem/crypto": "^2.4 || ^2.5",
-        "@hapi/boom": "^7.4.2",
-        "@hapi/hapi": "^18.3.1",
+        "@arkecosystem/crypto": "git+https://git@github.com/qredit/crypto.git",
+        "@arkecosystem/peers": "git+https://git@github.com/qredit/npm-peers.git",
+        "@hapi/boom": "^9.0.0",
+        "@hapi/hapi": "^19.0.0",
         "@hapist/json-rpc": "^0.2.0",
         "@hapist/whitelist": "^0.1.0",
-        "better-sqlite3": "^5.4.0",
+        "better-sqlite3": "^7.1.0",
         "bip39": "^3.0.2",
         "fs-extra": "^8.0.1",
         "got": "^9.6.0",
-        "is-reachable": "^3.1.0",
+        "is-reachable": "^4.0.0",
         "json-buffer": "^3.0.1",
         "lodash.sample": "^4.2.1",
-        "pino": "^5.12.6",
+        "pino": "^6.0.0",
         "pino-pretty": "^3.1.0",
         "sql": "^0.78.0",
-        "uuid": "^3.3.2",
+        "uuid": "^8.0.0",
         "wif": "^2.0.6"
     },
     "devDependencies": {
-        "@types/fs-extra": "^7.0.0",
+        "@types/fs-extra": "^8.0.0",
         "@types/hapi__boom": "^7.4.0",
-        "@types/hapi__hapi": "^18.2.1",
+        "@types/hapi__hapi": "^19.0.0",
         "@types/lodash.sample": "^4.2.6",
-        "@types/pino": "^5.20.0",
-        "@types/uuid": "^3.4.4",
-        "@types/wif": "^2.0.1"
+        "@types/pino": "^6.0.0",
+        "@types/uuid": "^8.0.0",
+        "@types/wif": "^2.0.1",
+        "nock": "^12.0.0"
     },
     "engines": {
         "node": ">=10.x"

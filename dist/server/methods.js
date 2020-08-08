@@ -8,7 +8,8 @@ const boom_1 = __importDefault(require("@hapi/boom"));
 const bip39_1 = require("bip39");
 const database_1 = require("../services/database");
 const network_1 = require("../services/network");
-const utils_1 = require("./utils");
+const crypto_2 = require("../utils/crypto");
+const transactions_1 = require("../utils/transactions");
 exports.methods = [
     {
         name: "blocks.info",
@@ -77,12 +78,15 @@ exports.methods = [
             if (!crypto_1.Transactions.Verifier.verifyHash(data)) {
                 return boom_1.default.badData();
             }
-            await network_1.network.sendPOST({
+            const broadcast = await network_1.network.sendPOST({
                 path: "transactions",
                 body: {
                     transactions: [transaction],
                 },
             });
+            if (Object.keys(broadcast.errors || {}).length > 0) {
+                return boom_1.default.badData(broadcast.errors[transaction.id][0].message);
+            }
             return transaction;
         },
         schema: {
@@ -100,10 +104,10 @@ exports.methods = [
         async method(params) {
             let transaction;
             try {
-                transaction = await utils_1.buildTransaction(params, "sign");
+                transaction = await transactions_1.buildTransfer(params, "sign");
             }
             catch (error) {
-                return boom_1.default.badData();
+                return boom_1.default.badData(error.message);
             }
             await database_1.database.set(transaction.id, transaction);
             return transaction;
@@ -124,8 +128,134 @@ exports.methods = [
                 vendorField: {
                     type: "string",
                 },
+                fee: {
+                    type: "string",
+                },
             },
             required: ["amount", "recipientId", "passphrase"],
+        },
+    },
+    {
+        name: "transactions.transfer.create",
+        async method(params) {
+            let transaction;
+            try {
+                transaction = await transactions_1.buildTransfer(params, "sign");
+            }
+            catch (error) {
+                return boom_1.default.badData(error.message);
+            }
+            await database_1.database.set(transaction.id, transaction);
+            return transaction;
+        },
+        schema: {
+            type: "object",
+            properties: {
+                amount: {
+                    type: "number",
+                },
+                recipientId: {
+                    type: "string",
+                    $ref: "address",
+                },
+                passphrase: {
+                    type: "string",
+                },
+                vendorField: {
+                    type: "string",
+                },
+                fee: {
+                    type: "string",
+                },
+            },
+            required: ["amount", "recipientId", "passphrase"],
+        },
+    },
+    {
+        name: "transactions.delegateRegistration.create",
+        async method(params) {
+            let transaction;
+            try {
+                transaction = await transactions_1.buildDelegateRegistration(params, "sign");
+            }
+            catch (error) {
+                return boom_1.default.badData(error.message);
+            }
+            await database_1.database.set(transaction.id, transaction);
+            return transaction;
+        },
+        schema: {
+            type: "object",
+            properties: {
+                username: {
+                    type: "string",
+                },
+                passphrase: {
+                    type: "string",
+                },
+                fee: {
+                    type: "string",
+                },
+            },
+            required: ["username", "passphrase"],
+        },
+    },
+    {
+        name: "transactions.vote.create",
+        async method(params) {
+            let transaction;
+            try {
+                transaction = await transactions_1.buildVote(params, "sign");
+            }
+            catch (error) {
+                return boom_1.default.badData(error.message);
+            }
+            await database_1.database.set(transaction.id, transaction);
+            return transaction;
+        },
+        schema: {
+            type: "object",
+            properties: {
+                publicKey: {
+                    type: "string",
+                },
+                passphrase: {
+                    type: "string",
+                },
+                fee: {
+                    type: "string",
+                },
+            },
+            required: ["publicKey", "passphrase"],
+        },
+    },
+    {
+        name: "transactions.unvote.create",
+        async method(params) {
+            let transaction;
+            try {
+                transaction = await transactions_1.buildUnvote(params, "sign");
+            }
+            catch (error) {
+                return boom_1.default.badData(error.message);
+            }
+            await database_1.database.set(transaction.id, transaction);
+            return transaction;
+        },
+        schema: {
+            type: "object",
+            properties: {
+                publicKey: {
+                    type: "string",
+                },
+                passphrase: {
+                    type: "string",
+                },
+                fee: {
+                    type: "string",
+                },
+            },
+            required: ["publicKey", "passphrase"],
         },
     },
     {
@@ -151,13 +281,13 @@ exports.methods = [
         name: "transactions.bip38.create",
         async method(params) {
             try {
-                const wallet = await utils_1.getBIP38Wallet(params.userId, params.bip38);
+                const wallet = await crypto_2.getBIP38Wallet(params.userId, params.bip38);
                 if (!wallet) {
                     return boom_1.default.notFound(`User ${params.userId} could not be found.`);
                 }
                 let transaction;
                 try {
-                    transaction = await utils_1.buildTransaction({ ...params, ...{ passphrase: wallet.wif } }, "signWithWif");
+                    transaction = await transactions_1.buildTransfer({ ...params, ...{ passphrase: wallet.wif } }, "signWithWif");
                 }
                 catch (error) {
                     return boom_1.default.badData();
@@ -180,6 +310,9 @@ exports.methods = [
                     $ref: "address",
                 },
                 vendorField: {
+                    type: "string",
+                },
+                fee: {
                     type: "string",
                 },
                 bip38: {
@@ -268,7 +401,7 @@ exports.methods = [
         name: "wallets.bip38.create",
         async method(params) {
             try {
-                const { keys, wif } = await utils_1.getBIP38Wallet(params.userId, params.bip38);
+                const { keys, wif } = await crypto_2.getBIP38Wallet(params.userId, params.bip38);
                 return {
                     publicKey: keys.publicKey,
                     address: crypto_1.Identities.Address.fromPublicKey(keys.publicKey),
@@ -282,7 +415,7 @@ exports.methods = [
                 return {
                     publicKey,
                     address: crypto_1.Identities.Address.fromPublicKey(publicKey),
-                    wif: utils_1.decryptWIF(encryptedWIF, params.userId, params.bip38).wif,
+                    wif: crypto_2.decryptWIF(encryptedWIF, params.userId, params.bip38).wif,
                 };
             }
         },
@@ -307,7 +440,7 @@ exports.methods = [
             if (!encryptedWIF) {
                 return boom_1.default.notFound(`User ${params.userId} could not be found.`);
             }
-            const { keys, wif } = utils_1.decryptWIF(encryptedWIF, params.userId, params.bip38);
+            const { keys, wif } = crypto_2.decryptWIF(encryptedWIF, params.userId, params.bip38);
             return {
                 publicKey: keys.publicKey,
                 address: crypto_1.Identities.Address.fromPublicKey(keys.publicKey),

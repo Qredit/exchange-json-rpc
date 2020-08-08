@@ -1,4 +1,3 @@
-/// <reference types="hapi__boom" />
 import { Interfaces } from "@arkecosystem/crypto";
 import Boom from "@hapi/boom";
 export declare const methods: ({
@@ -18,6 +17,9 @@ export declare const methods: ({
             recipientId?: undefined;
             passphrase?: undefined;
             vendorField?: undefined;
+            fee?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             bip38?: undefined;
             userId?: undefined;
             address?: undefined;
@@ -33,7 +35,7 @@ export declare const methods: ({
     method(params: {
         id: string;
         offset?: number;
-    }): Promise<Boom<null> | {
+    }): Promise<Boom.Boom<unknown> | {
         count: any;
         data: any;
     }>;
@@ -51,6 +53,9 @@ export declare const methods: ({
             recipientId?: undefined;
             passphrase?: undefined;
             vendorField?: undefined;
+            fee?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             bip38?: undefined;
             userId?: undefined;
             address?: undefined;
@@ -62,9 +67,10 @@ export declare const methods: ({
     method(params: {
         recipientId: string;
         amount: string;
-        vendorField?: string;
         passphrase: string;
-    }): Promise<Interfaces.ITransactionData | Boom<null>>;
+        vendorField?: string;
+        fee?: string;
+    }): Promise<Interfaces.ITransactionData | Boom.Boom<unknown>>;
     schema: {
         type: string;
         properties: {
@@ -81,8 +87,75 @@ export declare const methods: ({
             vendorField: {
                 type: string;
             };
+            fee: {
+                type: string;
+            };
             id?: undefined;
             offset?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
+            bip38?: undefined;
+            userId?: undefined;
+            address?: undefined;
+        };
+        required: string[];
+    };
+} | {
+    name: string;
+    method(params: {
+        username: string;
+        passphrase: string;
+        fee?: string;
+    }): Promise<Interfaces.ITransactionData | Boom.Boom<unknown>>;
+    schema: {
+        type: string;
+        properties: {
+            username: {
+                type: string;
+            };
+            passphrase: {
+                type: string;
+            };
+            fee: {
+                type: string;
+            };
+            id?: undefined;
+            offset?: undefined;
+            amount?: undefined;
+            recipientId?: undefined;
+            vendorField?: undefined;
+            publicKey?: undefined;
+            bip38?: undefined;
+            userId?: undefined;
+            address?: undefined;
+        };
+        required: string[];
+    };
+} | {
+    name: string;
+    method(params: {
+        publicKey: string;
+        passphrase: string;
+        fee?: string;
+    }): Promise<Interfaces.ITransactionData | Boom.Boom<unknown>>;
+    schema: {
+        type: string;
+        properties: {
+            publicKey: {
+                type: string;
+            };
+            passphrase: {
+                type: string;
+            };
+            fee: {
+                type: string;
+            };
+            id?: undefined;
+            offset?: undefined;
+            amount?: undefined;
+            recipientId?: undefined;
+            vendorField?: undefined;
+            username?: undefined;
             bip38?: undefined;
             userId?: undefined;
             address?: undefined;
@@ -106,6 +179,9 @@ export declare const methods: ({
             recipientId?: undefined;
             passphrase?: undefined;
             vendorField?: undefined;
+            fee?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             bip38?: undefined;
             userId?: undefined;
             address?: undefined;
@@ -120,7 +196,8 @@ export declare const methods: ({
         recipientId: string;
         amount: string;
         vendorField?: string;
-    }): Promise<Interfaces.ITransactionData | Boom<null>>;
+        fee?: string;
+    }): Promise<Interfaces.ITransactionData | Boom.Boom<unknown>>;
     schema: {
         type: string;
         properties: {
@@ -134,6 +211,9 @@ export declare const methods: ({
             vendorField: {
                 type: string;
             };
+            fee: {
+                type: string;
+            };
             bip38: {
                 type: string;
             };
@@ -144,6 +224,8 @@ export declare const methods: ({
             id?: undefined;
             offset?: undefined;
             passphrase?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             address?: undefined;
         };
         required: string[];
@@ -167,6 +249,9 @@ export declare const methods: ({
             amount?: undefined;
             recipientId?: undefined;
             vendorField?: undefined;
+            fee?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             bip38?: undefined;
             userId?: undefined;
             address?: undefined;
@@ -191,6 +276,9 @@ export declare const methods: ({
             recipientId?: undefined;
             passphrase?: undefined;
             vendorField?: undefined;
+            fee?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             bip38?: undefined;
             userId?: undefined;
         };
@@ -201,7 +289,7 @@ export declare const methods: ({
     method(params: {
         offset?: number;
         address: string;
-    }): Promise<Boom<null> | {
+    }): Promise<Boom.Boom<unknown> | {
         count: any;
         data: any;
     }>;
@@ -220,6 +308,9 @@ export declare const methods: ({
             recipientId?: undefined;
             passphrase?: undefined;
             vendorField?: undefined;
+            fee?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             bip38?: undefined;
             userId?: undefined;
         };
@@ -230,7 +321,7 @@ export declare const methods: ({
     method(params: {
         userId: string;
         bip38: string;
-    }): Promise<Boom<null> | {
+    }): Promise<Boom.Boom<unknown> | {
         publicKey: string;
         address: string;
         wif: string;
@@ -251,6 +342,9 @@ export declare const methods: ({
             recipientId?: undefined;
             passphrase?: undefined;
             vendorField?: undefined;
+            fee?: undefined;
+            username?: undefined;
+            publicKey?: undefined;
             address?: undefined;
         };
         required: string[];
